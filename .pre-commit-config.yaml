@@ -10,7 +10,7 @@ repos:
   hooks:
   - id: no-commit-to-branch
     name: Block commits to protected branches
-    description: "Prevent commits to protected branches (main, master, dev, develop, release). To ignore rule use git commit --no-verify"
+    description: "Prevent commits to protected branches. To ignore rule use git commit --no-verify OR Temporarily disable pre-commit with `SKIP=no-commit-to-branch git commit -m 'FOO'`"
     args: [
       '--branch', 'main',
       '--branch', 'master',
