@@ -289,7 +289,7 @@ setup_branch_protection() {
   hooks:
   - id: no-commit-to-branch
     name: Block commits to protected branches
-    description: "Prevent commits to protected branches (main, master, dev, develop, release)"
+    description: "Prevent commits to protected branches (main, master, dev, develop, release). To ignore rule use git commit --no-verify"
     args: [
       '--branch', 'main',
       '--branch', 'master',
