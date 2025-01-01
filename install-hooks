@@ -67,7 +67,8 @@ confirm_action() {
     local message=$1
     echo
     echo -e "${BLUE}$message${NC}"
-    read -p "Do you want to proceed? (y/N): " -n 1 -r
+    # Use </dev/tty to read directly from terminal
+    read -p "Do you want to proceed? (y/N): " -n 1 -r </dev/tty
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
         return 1

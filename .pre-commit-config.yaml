@@ -10,7 +10,7 @@ repos:
   hooks:
   - id: no-commit-to-branch
     name: Block commits to protected branches
-    description: "Prevent commits to protected branches (main, master, dev, develop, release)"
+    description: "Prevent commits to protected branches (main, master, dev, develop, release). To ignore rule use git commit --no-verify"
     args: [
       '--branch', 'main',
       '--branch', 'master',
@@ -94,4 +94,12 @@ repos:
     description: "Lint Swift files"
     args: [--config, .swiftlint.yml]
     types: [swift]
+    require_serial: true
+- repo: https://github.com/qoomon/git-conventional-commits
+  rev: V2.6.7
+  hooks:
+  - id: conventional-commits
+    name: conventional-commits
+    description: "Check commit messages for conventional commit format"
+    stages: [commit-msg]
     require_serial: true
