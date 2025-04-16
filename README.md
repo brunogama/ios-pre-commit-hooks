@@ -1,6 +1,6 @@
 # pre-commit-configs
 
-pre-commit-connfigs for ios development
+pre-commit-configs for ios development
 
 ## Installation
 
