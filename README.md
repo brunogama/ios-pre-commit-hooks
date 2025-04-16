@@ -7,7 +7,7 @@ pre-commit-connfigs for ios development
 To install the pre-commit hooks using this configuration, run the following command in your terminal:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME/main/install | bash
+curl -sSL https://raw.githubusercontent.com/brunogama/pre-commit-configs/main/install | bash
 ```
 
 **Note:** Ensure you have `curl`, `tar`, and `bash` installed on your system. You might need to update the URL in the command if your repository details or default branch (`main`) are different.
