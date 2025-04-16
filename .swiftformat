@@ -1,107 +1,45 @@
-# SwiftFormat config compliant with Google Swift Guideline
-# https://google.github.io/swift/#control-flow-statements
 
-# Specify version used in a project
+# SwiftFormat configuration aligned with Apple's Open Source Swift Style
+# https://github.com/apple/swift/blob/main/CONTRIBUTING.md#code-style
 
 --swiftversion 5.9
 
-# Rules explicitly required by the guideline
-
---rules                           \
-blankLinesAroundMark,             \
-blankLinesAtEndOfScope,           \
-blankLinesAtStartOfScope,         \
-blankLinesBetweenScopes,          \
-braces,                           \
-consecutiveBlankLines,            \
-consecutiveSpaces,                \
-duplicateImports,                 \
-elseOnSameLine,                   \
-emptyBraces,                      \
-enumNamespaces,                   \
-extensionAccessControl,           \
-hoistPatternLet,                  \
-indent,                           \
-leadingDelimiters,                \
-linebreakAtEndOfFile,             \
-markTypes,                        \
-organizeDeclarations,             \
-redundantInit,                    \
-redundantParens,                  \
-redundantPattern,                 \
-redundantRawValues,               \
-redundantType,                    \
-redundantVoidReturnType,          \
-semicolons,                       \
-sortedImports,                    \
-sortedSwitchCases,                \
-spaceAroundBraces,                \
-spaceAroundBrackets,              \
-spaceAroundComments,              \
-spaceAroundGenerics,              \
-spaceAroundOperators,             \
-spaceAroundParens,                \
-spaceInsideBraces,                \
-spaceInsideBrackets,              \
-spaceInsideComments,              \
-spaceInsideGenerics,              \
-spaceInsideParens,                \
-todos,                            \
-trailingClosures,                 \
-trailingCommas,                   \
-trailingSpace,                    \
-typeSugar,                        \
-void,                             \
-wrap,                             \
-wrapArguments,                    \
-wrapAttributes,                   \
-#
-#
-# Additional rules not mentioned in the guideline, but helping to keep the codebase clean
-# Quoting the guideline:
-# Common themes among the rules in this section are:
-# avoid redundancy, avoid ambiguity, and prefer implicitness over explicitness
-# unless being explicit improves readability and/or reduces ambiguity.
-#
-#
-andOperator,                      \
-isEmpty,                          \
-redundantBackticks,               \
-redundantBreak,                   \
-redundantExtensionACL,            \
-redundantGet,                     \
-redundantLetError,                \
-redundantNilInit,                 \
-redundantObjc,                    \
-redundantReturn,                  \
-redundantSelf,                    \
-strongifiedSelf
-
-
-# Options for basic rules
-
---extensionacl on-declarations
---funcattributes prev-line
+# Core Apple Swift Style Rules
 --indent 4
---maxwidth 10
---typeattributes prev-line
---funcattributes prev-line
---storedvarattrs prev-line
---computedvarattrs prev-line
---complexattrs prev-line
---voidtype tuple
+--tabwidth 4
+--allman false
+--commas inline
+--semicolons inline
+--linebreaks lf
+--self insert
+--header ignore
+--trimwhitespace always
 --wraparguments before-first
---wrapparameters before-first
---wrapcollections before-first
---wrapreturntype if-multiline
---wrapconditions after-first
+--wrapelements before-first
+--closingparen balanced
+--xcodeindentation true
+--stripunusedargs closure-only
+--importgrouping alphabetized
 
-# Option for additional rules
+--rules                              \
+blankLinesAtEndOfScope,              \
+blankLinesBetweenScopes,             \
+braces,                              \
+consecutiveBlankLines,               \
+consecutiveSpaces,                   \
+duplicateImports,                    \
+elseOnSameLine,                      \
+emptyBraces,                         \
+hoistPatternLet,                     \
+indent,                              \
+modifierOrder,                       \
+numberFormatting,                    \
+redundantLet,                        \
+redundantReturn,                     \
+sortedImports,                       \
+spaceAroundOperators,               \
+spaceInsideBraces,                   \
+strongOutlets,                       \
+trailingCommas,                      \
+wrapMultilineStatementBraces
 
---self init-only
-
-# Excluded folders
-
---exclude Pods,**/UNTESTED_TODO,vendor,fastlane
-
-# https://github.com/NoemiRozpara/Google-SwiftFormat-Config
