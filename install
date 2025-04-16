@@ -1,0 +1,57 @@
+#!/bin/bash
+set -e # Exit immediately if a command exits with a non-zero status.
+
+# --- Configuration ---
+# !!! IMPORTANT: Update this line with your actual GitHub username and repository name !!!
+REPO_URL="https://github.com/brunogama/pre-commit-configs"
+# You can change "main" to your default branch if it's different
+BRANCH="main"
+# --- End Configuration ---
+
+ARCHIVE_URL="$REPO_URL/archive/refs/heads/$BRANCH.tar.gz"
+TMP_DIR=$(mktemp -d)
+
+# Function to clean up the temporary directory on exit
+cleanup() {
+  echo "Cleaning up temporary directory: $TMP_DIR"
+  rm -rf "$TMP_DIR"
+}
+# Register the cleanup function to be called on the EXIT signal
+trap cleanup EXIT
+
+echo "Downloading repository archive from $ARCHIVE_URL..."
+# Use curl with -L to follow redirects, -s for silent, -S to show errors, -o to specify output file
+if ! curl -sSL -o "$TMP_DIR/repo.tar.gz" "$ARCHIVE_URL"; then
+  echo "Error: Failed to download repository archive from $ARCHIVE_URL" >&2
+  exit 1
+fi
+
+echo "Extracting archive..."
+# Extract the tarball. The --strip-components=1 option removes the top-level directory from the archive.
+if ! tar -xzf "$TMP_DIR/repo.tar.gz" -C "$TMP_DIR" --strip-components=1; then
+  echo "Error: Failed to extract repository archive." >&2
+  exit 1
+fi
+
+# Check if install-hooks exists and is executable
+INSTALL_HOOKS_SCRIPT="$TMP_DIR/install-hooks"
+if [ ! -f "$INSTALL_HOOKS_SCRIPT" ]; then
+    echo "Error: install-hooks script not found in the repository root." >&2
+    exit 1
+fi
+
+# Make sure install-hooks is executable (it might not be in the tarball)
+chmod +x "$INSTALL_HOOKS_SCRIPT"
+
+echo "Executing install-hooks script..."
+# Change to the temporary directory to run the script, so relative paths within the repo work
+cd "$TMP_DIR"
+if ! ./install-hooks; then
+  echo "Error: install-hooks script failed." >&2
+  # The cleanup function will still run due to the trap
+  exit 1
+fi
+
+echo "Installation successful."
+# Cleanup will happen automatically on exit
+exit 0
