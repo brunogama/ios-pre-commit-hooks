@@ -1,6 +1,6 @@
 # Pre-Commit Configurations for iOS Development
 
-**Why**? Developers functiond is to code so why not apply styling and linting in a pre-commit-hook?
+**Why**? Developers function is to code and shouldn't care about formatting. So why not apply styling and linting in a pre-commit-hook?
 
 This repository provides pre-commit hooks designed specifically for iOS development. These hooks help automate code quality checks and enforce coding standards, ensuring a smoother development experience.
 
