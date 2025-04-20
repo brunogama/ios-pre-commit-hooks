@@ -227,7 +227,7 @@ EOL
   - id: swiftlint
     name: swiftlint
     description: "Lint Swift files"
-    args: [--config, .swiftlint.yml]
+    args: [--autocorrect, --config, .swiftlint.yml]
     types: [swift]
     require_serial: true
 EOL
