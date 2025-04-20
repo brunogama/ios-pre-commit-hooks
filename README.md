@@ -9,6 +9,7 @@ This repository provides pre-commit hooks designed specifically for iOS developm
 - Automates code quality checks.
 - Ensures adherence to coding standards.
 - Identifies and resolves common issues before committing changes.
+- The formatting and linting where based on Apple's open source projects
 
 ## Requirements
 
