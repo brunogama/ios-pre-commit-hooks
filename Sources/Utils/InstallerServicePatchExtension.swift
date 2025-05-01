@@ -1,8 +1,8 @@
-import Foundation
 import Application.Services
 import Domain.Constants
-import Infrastructure.Registry
+import Foundation
 import Infrastructure.Logging
+import Infrastructure.Registry
 import OSLog
 
 /// InstallerService logger implementation

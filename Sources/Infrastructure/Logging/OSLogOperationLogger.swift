@@ -1,6 +1,6 @@
+import Domain.Protocols
 import Foundation
 import OSLog
-import Domain.Protocols
 
 /// Implementation of OperationLoggerProtocol using modern OSLog framework
 public final class OperationLogger: OperationLoggerProtocol {

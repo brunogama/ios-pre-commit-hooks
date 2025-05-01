@@ -1,6 +1,6 @@
-import Foundation
 import Domain.Protocols
 import Domain.ValueObjects
+import Foundation
 
 /// Complete patch installer service
 public final class CompletePatchInstaller {
@@ -10,9 +10,10 @@ public final class CompletePatchInstaller {
     private let logger: OperationLoggerProtocol
     
     public init(templateRegistry: TemplateRegistryProtocol,
-         configWriter: ConfigFileWriter,
-         fileManager: FileManager = .default,
-         logger: OperationLoggerProtocol) {
+                configWriter: ConfigFileWriter,
+                fileManager: FileManager = .default,
+                logger: OperationLoggerProtocol)
+    {
         self.templateRegistry = templateRegistry
         self.configWriter = configWriter
         self.fileManager = fileManager

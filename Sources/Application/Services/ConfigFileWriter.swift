@@ -1,7 +1,7 @@
-import Foundation
-import Domain.Protocols
 import Domain.Constants
+import Domain.Protocols
 import Domain.ValueObjects
+import Foundation
 import Infrastructure.Shell
 
 /// Config file writer that handles template addition to config files
@@ -11,8 +11,9 @@ public final class ConfigFileWriter {
     private let logger: OperationLoggerProtocol
     
     public init(fileManager: FileManager = .default, 
-         shellExecutor: ShellCommandExecutor = ShellCommandExecutor(),
-         logger: OperationLoggerProtocol) {
+                shellExecutor: ShellCommandExecutor = ShellCommandExecutor(),
+                logger: OperationLoggerProtocol)
+    {
         self.fileManager = fileManager
         self.shellExecutor = shellExecutor
         self.logger = logger

@@ -18,7 +18,7 @@ public final class LoggerFactory {
     /// - Parameter category: The component or category name
     /// - Returns: A configured logger
     public func createLogger(category: String) -> OperationLoggerProtocol {
-        return OperationLogger(
+        OperationLogger(
             subsystem: appBundleID,
             category: category,
             isVerbose: isVerbose
@@ -31,7 +31,7 @@ public final class LoggerFactory {
     ///   - category: The component or category name
     /// - Returns: A configured logger
     public func createDomainLogger(domain: String, category: String) -> OperationLoggerProtocol {
-        return OperationLogger(
+        OperationLogger(
             subsystem: "\(appBundleID).\(domain)",
             category: category,
             isVerbose: isVerbose
