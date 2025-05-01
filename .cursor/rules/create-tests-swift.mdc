@@ -1,0 +1,423 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Swift Testing Guidelines
+
+Rule for creating effective Swift tests using XCTest and other iOS testing frameworks.
+
+<rule>
+name: create_tests_swift
+filters:
+  - type: file_change
+    pattern: "*.swift"
+  - type: file_change
+    pattern: "*Tests/*.swift"
+  - type: file_change
+    pattern: "*UITests/*.swift"
+  - type: command
+    pattern: "test"
+
+actions:
+  - type: react
+    conditions:
+      - pattern: "create test|test create"
+    action: |
+      # Create a new test file
+      
+      I'll create a new test file following iOS testing best practices:
+      
+      1. Determine test type and location:
+         - Unit tests in [Target]Tests/
+         - UI tests in [Target]UITests/
+         - Integration tests in appropriate test target
+      
+      2. Structure the test file:
+         - Import XCTest and tested module
+         - Create test class inheriting from XCTestCase
+         - Add setup/teardown if needed
+         - Group related tests using MARK comments
+      
+      3. Follow naming conventions:
+         - Test class: [TestedClass]Tests
+         - Test methods: test_[scenario]_[expectedResult]
+         - Test files: [TestedClass]Tests.swift
+      
+      4. Include essential test components:
+         - Arrange (setup test data)
+         - Act (perform the test)
+         - Assert (verify results)
+      
+      5. Add test documentation:
+         - Test purpose and requirements
+         - Any special setup needed
+         - Expected outcomes
+      
+      This creates well-structured, maintainable tests.
+
+  - type: react
+    conditions:
+      - pattern: "test coverage|coverage test"
+    action: |
+      # Check test coverage
+      
+      I'll analyze test coverage using Xcode's coverage tools:
+      
+      1. Enable code coverage in scheme settings
+      2. Run test suite with coverage enabled
+      3. Generate coverage report
+      4. Identify areas needing more tests
+      5. Suggest specific test cases to add
+      
+      Coverage reports will be saved to test_output/coverage/
+
+  - type: react
+    conditions:
+      - pattern: "test performance|performance test"
+    action: |
+      # Create performance tests
+      
+      I'll create performance tests using XCTest's measure block:
+      
+      1. Identify critical paths to test
+      2. Set up baseline metrics
+      3. Create measure blocks
+      4. Add performance assertions
+      5. Document performance requirements
+      
+      This ensures critical code paths maintain expected performance.
+
+  - type: react
+    event: "file_change"
+    conditions:
+      - pattern: "*Tests/*.swift"
+      - pattern: "*UITests/*.swift"
+    action: |
+      # Validate test file quality
+      
+      When test files change, I'll verify:
+      
+      1. Test structure follows conventions
+      2. All test methods are properly named
+      3. Setup/teardown are appropriate
+      4. Assertions are meaningful
+      5. Documentation is complete
+      
+      This maintains high-quality tests.
+
+  - type: suggest
+    message: |
+      ### Swift Testing Guidelines
+
+      I follow iOS testing best practices:
+
+      **Test Creation:**
+      - `test create "ClassToTest"` - Create new test file
+      - `test coverage` - Check test coverage
+      - `test performance` - Create performance tests
+
+      **Test Types:**
+      - Unit Tests (XCTest)
+      - UI Tests (XCUITest)
+      - Integration Tests
+      - Performance Tests
+
+      **Conventions:**
+      - Test class: [TestedClass]Tests : XCTestCase
+      - Test methods: test_[scenario]_[expectedResult]
+      - Files in appropriate test target
+      - Clear arrange-act-assert structure
+
+      **Automatic Behaviors:**
+      - When test files change → Validate structure
+      - When implementing features → Suggest test cases
+      - When coverage drops → Recommend new tests
+
+      This ensures comprehensive test coverage while maintaining
+      test quality and consistency.
+
+examples:
+  - input: |
+      test create "LoginViewController"
+    output: "Created LoginViewControllerTests.swift with unit test structure"
+
+  - input: |
+      test coverage
+    output: "Generated coverage report. Current coverage: 85%. Areas needing tests: UserAuthentication.swift"
+
+metadata:
+  priority: high
+  version: 1.0
+</rule>
+
+# Swift Testing Best Practices for Test-Driven Development (TDD)
+
+As an AI assistant driving iOS development through testing, I MUST follow these guidelines to create effective, maintainable, and reliable tests, ensuring code quality and resilience. The primary goal is to practice TDD: **write tests *before* production code.**. Before adding code to the codebase I will create the unit tests abd connit thenm. After that I'll rationalize the task and will work in all the tests created.
+
+## General Testing Philosophy
+
+- **TDD First**: Write a failing test *before* writing the implementation code. ALL FLOW OFF WRITING THE TEST MUST FOLLOW RED GREEN REFACTOR.
+- **Test Behavior, Not Implementation**: Focus on *what* the code should do, not *how* it does it.
+- **SOLID Alignment**: Design tests to validate contracts defined by protocols and interfaces (Dependency Inversion).
+- **Single Responsibility Principle (SRP)**: Each test method should validate one specific aspect or behavior.
+- **Object Calisthenics**: Keep test methods small, focused, and avoid excessive setup. Aim for clarity.
+- **Keep Tests Simple, Fast, and Independent**: Avoid dependencies between tests.
+- **One Assertion Per Test**: Strive for one logical assertion per test method to pinpoint failures accurately (SRP).
+
+## XCTest Framework Basics
+
+### Unit Test Structure
+
+- Name test methods with format `test_<methodName>_<scenario>_<expectedResult>`
+- Use XCTAssert functions for assertions (XCTAssertEqual, XCTAssertTrue, etc.)
+- Organize tests in a logical, consistent manner
+- Use setUp() and tearDown() methods for common initialization and cleanup
+
+```swift
+class CartTests: XCTestCase {
+    // MARK: - Properties
+    private var cart: ShoppingCart!
+    private var mockPricingService: MockPricingService!
+    
+    // MARK: - Setup & Teardown
+    override func setUp() {
+        super.setUp()
+        mockPricingService = MockPricingService()
+        cart = ShoppingCart(pricingService: mockPricingService)
+    }
+    
+    override func tearDown() {
+        cart = nil
+        mockPricingService = nil
+        super.tearDown()
+    }
+    
+    // MARK: - Tests
+    func test_addItem_withValidProduct_increasesItemCount() {
+        // Arrange
+        let initialCount = cart.itemCount
+        let product = Product(id: "test", name: "Test Product", price: 10.0)
+        
+        // Act
+        cart.add(product: product)
+        
+        // Assert
+        XCTAssertEqual(cart.itemCount, initialCount + 1, "Adding a product should increase item count by 1")
+    }
+    
+    func test_calculateTotal_withTaxRate_returnsSumPlusTax() {
+        // Arrange
+        let product1 = Product(id: "p1", name: "Product 1", price: 10.0)
+        let product2 = Product(id: "p2", name: "Product 2", price: 15.0)
+        cart.add(product: product1)
+        cart.add(product: product2)
+        
+        // Act
+        let total = cart.calculateTotal(withTaxRate: 0.1)
+        
+        // Assert
+        XCTAssertEqual(total, 27.5, "Total should be sum plus tax: (10 + 15) * 1.1 = 27.5")
+    }
+}
+```
+
+### UI Tests
+
+- Use XCUITest for automated UI testing.
+- Tests MUST follow the **Page Object Model (POM)** pattern for maintainability. Structure UI tests by screen or logical flow.
+- Test critical user flows, not every minor interaction.
+
+```swift
+class LoginUITests: XCTestCase {
+    let app = XCUIApplication()
+    
+    override func setUp() {
+        super.setUp()
+        continueAfterFailure = false
+        app.launch()
+    }
+    
+    func test_login_withValidCredentials_showsHomeScreen() {
+        // Enter credentials
+        let emailTextField = app.textFields["emailTextField"]
+        let passwordTextField = app.secureTextFields["passwordTextField"]
+        let loginButton = app.buttons["loginButton"]
+        
+        emailTextField.tap()
+        emailTextField.typeText("test@example.com")
+        
+        passwordTextField.tap()
+        passwordTextField.typeText("password123")
+        
+        loginButton.tap()
+        
+        // Verify home screen appeared
+        let homeTitle = app.staticTexts["homeTitle"]
+        XCTAssertTrue(homeTitle.waitForExistence(timeout: 2.0), "Home screen should appear after successful login")
+    }
+}
+```
+
+## Mocking and Stubbing
+
+### Creating Test Doubles
+
+- Create mocks/stubs for dependencies to isolate the System Under Test (SUT).
+- **Use protocols** (Dependency Inversion) to define interfaces, making mocking easier and promoting loose coupling (SOLID).
+
+```swift
+// Protocol that enables mocking
+protocol NetworkService {
+    func fetchData(from url: URL, completion: @escaping (Result<Data, Error>) -> Void)
+}
+
+// Mock implementation for testing
+class MockNetworkService: NetworkService {
+    var dataToReturn: Data?
+    var errorToReturn: Error?
+    var capturedURL: URL?
+    
+    func fetchData(from url: URL, completion: @escaping (Result<Data, Error>) -> Void) {
+        capturedURL = url
+        
+        if let error = errorToReturn {
+            completion(.failure(error))
+        } else if let data = dataToReturn {
+            completion(.success(data))
+        }
+    }
+}
+
+// Using the mock in tests
+func test_fetchUserProfile_withSuccess_returnsUserObject() {
+    // Arrange
+    let mockService = MockNetworkService()
+    let userJSON = """
+    {"id": "123", "name": "Test User", "email": "test@example.com"}
+    """.data(using: .utf8)!
+    
+    mockService.dataToReturn = userJSON
+    let userRepository = UserRepository(networkService: mockService)
+    
+    let expectation = XCTestExpectation(description: "Fetch user profile")
+    var fetchedUser: User?
+    
+    // Act
+    userRepository.fetchUser(id: "123") { result in
+        if case .success(let user) = result {
+            fetchedUser = user
+        }
+        expectation.fulfill()
+    }
+    
+    // Assert
+    wait(for: [expectation], timeout: 1.0)
+    XCTAssertEqual(fetchedUser?.id, "123")
+    XCTAssertEqual(fetchedUser?.name, "Test User")
+    XCTAssertEqual(fetchedUser?.email, "test@example.com")
+}
+```
+
+### Dependency Injection
+
+- Design classes to accept dependencies via **initializer injection** (preferred) or property injection. This is crucial for testability and follows SOLID principles.
+- Use protocol types rather than concrete implementations for dependencies.
+
+```swift
+// Using the mock in tests
+func test_fetchUserProfile_withSuccess_returnsUserObject() {
+    // Arrange
+    let mockService = MockNetworkService()
+    let userJSON = """
+    {"id": "123", "name": "Test User", "email": "test@example.com"}
+    """.data(using: .utf8)!
+    
+    mockService.dataToReturn = userJSON
+    let userRepository = UserRepository(networkService: mockService)
+    
+    let expectation = XCTestExpectation(description: "Fetch user profile")
+    var fetchedUser: User?
+    
+    // Act
+    userRepository.fetchUser(id: "123") { result in
+        if case .success(let user) = result {
+            fetchedUser = user
+        }
+        expectation.fulfill()
+    }
+    
+    // Assert
+    wait(for: [expectation], timeout: 1.0)
+    XCTAssertEqual(fetchedUser?.id, "123")
+    XCTAssertEqual(fetchedUser?.name, "Test User")
+    XCTAssertEqual(fetchedUser?.email, "test@example.com")
+}
+```
+
+## Test Organization and Structure
+
+### File Organization
+
+- Group test files mirroring the app\'s structure (e.g., by feature).
+- Keep test files focused (SRP).
+
+```
+YourApp/
+└── Tests/
+    ├── UnitTests/
+    │   ├── Models/
+    │   ├── ViewModels/
+    │   └── Services/
+    ├── IntegrationTests/
+    │   ├── Networking/
+    │   └── Persistence/
+    ├── UITests/
+    │   ├── Flows/
+    │   └── Screens/
+    └── TestUtilities/
+        ├── Mocks/
+        ├── Factories/
+        └── Extensions/
+```
+
+### Continuous Integration
+
+- Configure test schemes for different test types
+- Set up CI to run tests on each PR and after merges
+- Track test coverage (using tools like Slather or Codecov)
+- Make test failures visible and actionable for the team
+
+## Testing Tips for SwiftUI
+
+- Test business logic primarily in **ViewModels** or other logic containers, keeping Views simple.
+- Use `ViewInspector` or similar tools cautiously for view structure testing if absolutely necessary.
+- Focus on testing state changes and their effects, aligning with the declarative nature of SwiftUI.
+
+```swift
+// Testing a SwiftUI ViewModel
+func test_toggleFavorite_updatesIsFavoriteProperty() {
+    // Arrange
+    let viewModel = ProductViewModel(product: testProduct)
+    
+    // Act
+    viewModel.toggleFavorite()
+    
+    // Assert
+    XCTAssertTrue(viewModel.isFavorite)
+    
+    // Act again
+    viewModel.toggleFavorite()
+    
+    // Assert again
+    XCTAssertFalse(viewModel.isFavorite)
+}
+```
+
+## Testing Legacy Code
+
+- Focus on high-value areas first. Add tests before refactoring.
+- Use the **Humble Object pattern** to separate testable logic from difficult-to-test UI or framework code.
+- Apply **Characterization Testing** (writing tests to document existing behavior) before refactoring undocumented code.
+
+Remember that good tests are investments in your codebase\'s long-term health and resilience. They provide confidence in refactoring, document expected behavior, enforce SOLID principles, and catch regressions early. Write tests that are useful, maintainable, reliable, and drive the development process (TDD).

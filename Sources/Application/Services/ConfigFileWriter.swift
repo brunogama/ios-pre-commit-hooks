@@ -44,7 +44,7 @@ public final class ConfigFileWriter {
         // Add header
         let headerResult = try shellExecutor.executeInBash(script: "echo -e \"\(template.header)\" >> \(configPath.path)")
         if !headerResult.isSuccessful {
-            logger.logError(message: "Failed to append template header: \(headerResult.output)")
+            logger.error("Failed to append template header: \(headerResult.output)")
             return
         }
         
@@ -56,7 +56,7 @@ public final class ConfigFileWriter {
         }
         try fileHandle.close()
         
-        logger.logSuccess(message: "Added template: \(template.header)")
+        logger.success("Added template: \(template.header)")
     }
     
     public func appendManagedSectionMarker(toConfigAt configPath: FilePath) throws {
@@ -66,7 +66,7 @@ public final class ConfigFileWriter {
         )
         
         if !markerResult.isSuccessful {
-            logger.logError(message: "Failed to append section marker: \(markerResult.output)")
+            logger.error("Failed to append section marker: \(markerResult.output)")
         }
     }
 } 

@@ -3,25 +3,36 @@ import Application.Services
 import Domain.Constants
 import Infrastructure.Registry
 import Infrastructure.Logging
+import OSLog
 
 /// InstallerService logger implementation
 private class InstallerServiceLogger: OperationLoggerProtocol {
+    private let logger: Logger
     private let installerService: InstallerService
     
     init(installerService: InstallerService) {
         self.installerService = installerService
+        self.logger = Logger(subsystem: "com.pre-commit-configs", category: "InstallerService")
     }
     
-    func logInfo(message: String) {
-        print(message)
+    func info(_ message: String) {
+        logger.info("\(message, privacy: .public)")
     }
     
-    func logSuccess(message: String) {
-        print(message.green)
+    func success(_ message: String) {
+        logger.notice("✅ \(message, privacy: .public)")
     }
     
-    func logError(message: String) {
-        print(message.red)
+    func error(_ message: String) {
+        logger.error("❌ \(message, privacy: .public)")
+    }
+    
+    func debug(_ message: String) {
+        logger.debug("\(message, privacy: .public)")
+    }
+    
+    func warning(_ message: String) {
+        logger.warning("⚠️ \(message, privacy: .public)")
     }
 }
 

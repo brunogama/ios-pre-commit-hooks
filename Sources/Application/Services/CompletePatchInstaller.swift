@@ -27,7 +27,7 @@ public final class CompletePatchInstaller {
         
         for templateName in templateNames {
             guard let templatePath = templateRegistry.templatePath(for: templateName) else {
-                logger.logError(message: "Template not found: \(templateName.name)")
+                logger.error("Template not found: \(templateName.name)")
                 continue
             }
             
