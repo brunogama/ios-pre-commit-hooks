@@ -1,0 +1,9 @@
+# Conventional Commits Hook
+- repo: https://github.com/qoomon/git-conventional-commits
+  rev: V2.6.7
+  hooks:
+  - id: conventional-commits
+    name: conventional-commits
+    description: "Check commit messages for conventional commit format"
+    stages: [commit-msg]
+    require_serial: true

@@ -1,0 +1,9 @@
+# Binary Size Check
+- repo: local
+  hooks:
+  - id: binary-size-check
+    name: Check binary size
+    entry: ./scripts/check-binary-size.sh
+    language: script
+    pass_filenames: false
+    stages: [pre-push]

@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:pre-commit-configs}",
+            "name": "Debug PreCommitInstaller",
+            "program": "${workspaceFolder:pre-commit-configs}/.build/debug/PreCommitInstaller",
+            "preLaunchTask": "swift: Build Debug PreCommitInstaller"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:pre-commit-configs}",
+            "name": "Release PreCommitInstaller",
+            "program": "${workspaceFolder:pre-commit-configs}/.build/release/PreCommitInstaller",
+            "preLaunchTask": "swift: Build Release PreCommitInstaller"
+        }
+    ]
+}

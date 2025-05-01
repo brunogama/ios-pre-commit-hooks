@@ -1,0 +1,14 @@
+# Protected Branch Hook
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.5.0
+  hooks:
+  - id: no-commit-to-branch
+    name: Block commits to protected branches
+    description: "Prevent commits to protected branches"
+    args: [
+      '--branch', 'main',
+      '--branch', 'master',
+      '--branch', 'dev',
+      '--branch', 'develop',
+      '--branch', 'release'
+    ]

@@ -1,0 +1,11 @@
+# SwiftGen Hook
+- repo: https://github.com/SwiftGen/SwiftGen
+  rev: 6.6.2
+  hooks:
+  - id: swiftgen
+    name: swiftgen
+    description: "Generate Swift code for resources"
+    entry: swiftgen
+    language: system
+    pass_filenames: false
+    always_run: true

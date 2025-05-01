@@ -1,0 +1,10 @@
+# XcodeGen Hook
+- repo: https://github.com/yonaskolb/XcodeGen
+  rev: 2.38.0
+  hooks:
+  - id: xcodegen
+    name: xcodegen
+    description: "Generate Xcode project from spec"
+    entry: xcodegen generate
+    language: system
+    pass_filenames: false

@@ -1,0 +1,10 @@
+# SwiftLint Hook
+- repo: https://github.com/realm/SwiftLint
+  rev: 0.58.0
+  hooks:
+  - id: swiftlint
+    name: swiftlint
+    description: "Lint Swift files"
+    args: [--autocorrect, --config, .swiftlint.yml]
+    types: [swift]
+    require_serial: true

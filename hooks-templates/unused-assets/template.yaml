@@ -1,0 +1,8 @@
+# Unused Assets Check
+- repo: local
+  hooks:
+  - id: unused-assets-check
+    name: Check for unused assets
+    entry: ./scripts/check-unused-assets.sh
+    language: script
+    pass_filenames: false

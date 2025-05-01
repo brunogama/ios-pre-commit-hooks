@@ -18,6 +18,23 @@ struct Config {
     static let archiveURL = "\(repoURL)/archive/refs/heads/\(branch).tar.gz"
     static let configFile = ".pre-commit-config.yaml"
     static let scriptsDir = "scripts"
+
+    // Standard content blocks for the config file
+    static let standardHeader = """
+# See https://pre-commit.com/ for more information
+# See https://pre-commit.com/hooks.html for more hooks
+# This file is managed by the pre-commit-configs installer.
+"""
+
+    static let standardDefaults = """
+# Default configurations (optional)
+default_stages: [pre-commit] # Sensible default
+default_install_hook_types: [pre-commit, pre-push, commit-msg]
+# default_language_version:
+#   python: python3.9
+"""
+
+    static let managedHookMarker = "# --- Managed by pre-commit-configs installer ---"
 }
 
 // MARK: - Hook Definitions
@@ -222,15 +239,13 @@ class TerminalUI {
 // MARK: - Menu System
 enum MenuOption {
     case configureHooks
-    case configureScripts
     case installSelected
     case exit
     
     static var all: [(MenuOption, String, String)] {
         [
             (.configureHooks, "Configure Hooks", "Select and configure pre-commit hooks"),
-            (.configureScripts, "Configure Scripts", "Select and configure local script templates"),
-            (.installSelected, "Install Selected Items", "Install all selected hooks and scripts"),
+            (.installSelected, "Install Selected Items", "Install all selected hooks and dependent scripts"),
             (.exit, "Exit", "Exit the installer")
         ]
     }
@@ -239,7 +254,6 @@ enum MenuOption {
 // MARK: - Installer UI
 class InstallerUI {
     private var selectedHooks: Set<String> = []
-    private var selectedScripts: Set<String> = []
     private let installer: Installer
     
     init(installer: Installer) {
@@ -255,12 +269,13 @@ class InstallerUI {
             
             // Show title and introduction
             print(Term.colored("Pre-commit Hooks Installer", Term.blue))
-            print("Selected: \(selectedHooks.count) hooks, \(selectedScripts.count) scripts\n")
+            print("Selected: \(selectedHooks.count) hooks\n")
             
             // Display menu items
             for (index, option) in options.enumerated() {
                 let cursor = index == currentSelection ? Term.colored(">", Term.green) : " "
-                print("\(cursor) \(option.1) (selected: \(getSelectionCountForOption(option.0)))")
+                let displayCount = option.0 == .configureHooks ? "(selected: \(selectedHooks.count))" : ""
+                print("\(cursor) \(option.1) \(displayCount)")
             }
             
             // Instructions
@@ -269,8 +284,6 @@ class InstallerUI {
             
             // Process key input
             if let key = MenuCursor.readKey() {
-                print("DEBUG: Key pressed: \(key)") // Debug key detection
-                
                 switch key {
                 case MenuCursor.up:
                     if currentSelection > 0 {
@@ -288,8 +301,6 @@ class InstallerUI {
                     switch chosenOption {
                     case .configureHooks:
                         configureHooks()
-                    case .configureScripts:
-                        configureScripts()
                     case .installSelected:
                         if installSelected() { return } // Exit if installation successful
                     case .exit:
@@ -297,10 +308,9 @@ class InstallerUI {
                     }
                     
                 // Simple numeric selection
-                case "1", "2", "3", "4", "5":
-                    if let selectedIndex = Int(key), selectedIndex > 0, selectedIndex <= options.count {
-                        currentSelection = selectedIndex - 1
-                    }
+                case "1": currentSelection = 0 // Configure Hooks
+                case "2": currentSelection = 1 // Install Selected Items
+                case "3": currentSelection = 2 // Exit
                 default:
                     // Ignore other keys
                     break
@@ -309,18 +319,6 @@ class InstallerUI {
             
             // Short sleep to prevent CPU hogging
             usleep(10000)
-        }
-    }
-    
-    // Helper to get selection count for menu display
-    private func getSelectionCountForOption(_ option: MenuOption) -> Int {
-        switch option {
-        case .configureHooks:
-            return selectedHooks.count
-        case .configureScripts:
-            return selectedScripts.count
-        case .installSelected, .exit:
-            return 0
         }
     }
     
@@ -412,253 +410,9 @@ class InstallerUI {
             usleep(10000)
         }
     }
-
-    // MARK: - Script Configuration Logic
-    private func configureScripts() {
-        guard let templates = try? installer.getAvailableTemplates() else {
-            TerminalUI.showError("Could not load script templates")
-            sleep(2)
-            return
-        }
-
-        if templates.isEmpty {
-            TerminalUI.showWarning("No script templates available.")
-            print("Press Enter to continue...")
-            _ = MenuCursor.waitForEnter() // Wait for Enter
-            return
-        }
-
-        var currentSelection = 0
-        var currentSelections = selectedScripts
-        
-        while true {
-            MenuCursor.clearScreen()
-            
-            print(Term.colored("Script Template Configuration", Term.blue))
-            print("Selected: \(currentSelections.count) scripts\n")
-            
-            // Display menu items
-            for (index, template) in templates.enumerated() {
-                let isSelected = currentSelections.contains(template.0)
-                let cursor = index == currentSelection ? Term.colored(">", Term.green) : " "
-                let checkbox = isSelected ? "[✓]" : "[ ]"
-                
-                print("\(cursor) \(checkbox) \(template.0)")
-                // If this is the current selection, show the description
-                if index == currentSelection {
-                    print("       \(template.1)")
-                }
-            }
-            
-            print("\nUse up/down arrows to navigate, Space to toggle selection, Enter to confirm, Esc to go back")
-            fflush(stdout)
-            
-            // Process key input
-            if let key = MenuCursor.readKey() {
-                switch key {
-                case MenuCursor.up:
-                    if currentSelection > 0 {
-                        currentSelection -= 1
-                    }
-                case MenuCursor.down:
-                    if currentSelection < templates.count - 1 {
-                        currentSelection += 1
-                    }
-                case MenuCursor.space:
-                    // Toggle selection for current item
-                    let scriptId = templates[currentSelection].0
-                    if currentSelections.contains(scriptId) {
-                        currentSelections.remove(scriptId)
-                    } else {
-                        currentSelections.insert(scriptId)
-                    }
-                case MenuCursor.enter:
-                    // Save selections and return
-                    selectedScripts = currentSelections
-                    return
-                case MenuCursor.escape, "b", "B":
-                    // Cancel and return (discard changes)
-                    return
-                default:
-                    // Ignore other keys
-                    break
-                }
-            }
-            
-            // Short sleep to prevent CPU hogging
-            usleep(10000)
-        }
-    }
-
-    // MARK: - Generic Menu Presentation Logic
-    enum MenuSelectionMode {
-        case single // Returns .selected(index) or .aborted
-        case multiple // Returns .selectedMultiple(indices) or .aborted
-    }
-
-    enum MenuResult {
-        case selected(Int)
-        case selectedMultiple(Set<Int>)
-        case aborted // User pressed Esc or 'b'
-        case noSelection // Should not happen if properly handled
-    }
-
-    private func presentMenu(
-        title: String,
-        subtitle: String? = nil,
-        items: [(String, String)], // (Display Name, Description)
-        initialSelections: Set<Int> = [],
-        selectedIndex: Int = 0,
-        footer: String,
-        allowNumericSelection: Bool,
-        selectionMode: MenuSelectionMode
-    ) -> MenuResult {
-        var currentSelection = selectedIndex
-        var currentSelections = initialSelections
-        let maxSelection = items.count - 1
-
-        // Ensure initial selection is valid and selectable
-        if !isItemSelectable(items[currentSelection].0) {
-            // Find the first selectable item
-            for (index, item) in items.enumerated() {
-                if isItemSelectable(item.0) {
-                    currentSelection = index
-                    break
-                }
-            }
-        }
-
-        while true {
-            MenuCursor.clearScreen()
-            print(Term.colored(title, Term.blue))
-            if let subtitle = subtitle {
-                print(Term.colored(subtitle, Term.yellow))
-            }
-            print("")
-
-            for (index, item) in items.enumerated() {
-                let isSelected = currentSelections.contains(index)
-                let isCurrent = index == currentSelection
-                
-                // Determine if item is selectable (non-header)
-                let isSelectable = isItemSelectable(item.0)
-
-                // Display cursor only for current selectable item
-                let cursor = isCurrent && isSelectable ? Term.colored(">", Term.green) : " "
-                
-                // Display marker
-                let marker: String
-                if isSelectable {
-                    switch selectionMode {
-                    case .single: 
-                        marker = isCurrent ? "●" : "○" // Radio button style
-                    case .multiple: 
-                        marker = isSelected ? "✓" : " " // Checkbox style
-                    }
-                    print("\(cursor) [\(marker)] \(item.0)")
-                } else {
-                    // This is a header item (item.1 contains the formatted header)
-                    print("\(cursor) \(item.1)") 
-                }
-
-                // Print description if available and not a header
-                if isSelectable && !item.1.isEmpty {
-                    // Indent description lines
-                    item.1.split(separator: "\n").forEach { line in
-                        print("    \(line)")
-                    }
-                }
-                
-                // Add spacing after each item
-                print("")
-            }
-
-            print(Term.colored(footer, Term.blue))
-            fflush(stdout)
-
-            // Read key input
-            guard let key = MenuCursor.readKey() else { continue }
-
-            switch key {
-            case MenuCursor.up:
-                // Find the previous selectable index
-                var prevIndex = currentSelection - 1
-                while prevIndex >= 0 {
-                    if isItemSelectable(items[prevIndex].0) {
-                        currentSelection = prevIndex
-                        break // Found the previous selectable item
-                    }
-                    prevIndex -= 1 // Continue searching upwards
-                }
-
-            case MenuCursor.down:
-                // Find the next selectable index
-                var nextIndex = currentSelection + 1
-                while nextIndex <= maxSelection {
-                    if isItemSelectable(items[nextIndex].0) {
-                        currentSelection = nextIndex
-                        break // Found the next selectable item
-                    }
-                    nextIndex += 1 // Continue searching downwards
-                }
-
-            case MenuCursor.space:
-                // Toggle selection for current item if in multiple selection mode and selectable
-                if selectionMode == .multiple && isItemSelectable(items[currentSelection].0) {
-                    if currentSelections.contains(currentSelection) {
-                        currentSelections.remove(currentSelection)
-                    } else {
-                        currentSelections.insert(currentSelection)
-                    }
-                }
-
-            case MenuCursor.enter:
-                // Handle Enter key based on selection mode
-                switch selectionMode {
-                case .single:
-                    // Only return if the current selection is actually selectable
-                    if isItemSelectable(items[currentSelection].0) {
-                        return .selected(currentSelection)
-                    }
-                case .multiple:
-                    // Return all selected indices (which should only contain selectable items)
-                    return .selectedMultiple(currentSelections)
-                }
-
-            case MenuCursor.escape, "b", "B":
-                return .aborted
-
-            default:
-                // Handle numeric selection if allowed
-                if allowNumericSelection, let num = Int(key), num > 0 {
-                     // Map number input to the Nth *selectable* item if possible
-                     // Or handle direct index mapping if that's the intended behavior
-                     let targetIndex = num - 1 // Assuming direct index mapping for now
-                    if targetIndex <= maxSelection && isItemSelectable(items[targetIndex].0) {
-                        currentSelection = targetIndex
-                        
-                        // For multiple selection mode, numeric input toggles selection
-                        if selectionMode == .multiple {
-                            if currentSelections.contains(targetIndex) {
-                                currentSelections.remove(targetIndex)
-                            } else {
-                                currentSelections.insert(targetIndex)
-                            }
-                        } 
-                        // In single selection, just move the cursor, Enter confirms.
-                    }
-                }
-            }
-        }
-    }
     
-    // Helper to check if an item is selectable
-    private func isItemSelectable(_ identifier: String) -> Bool {
-        // Only treat exact matches for header markers as non-selectable
-        return identifier != "[Group]" && identifier != "[Desc]"
-    }
-    
-    private func showSelectedForConfirmation() {
+    // MARK: - Installation and Confirmation
+    private func showSelectedForConfirmation(requiredScripts: [String]) {
         // MenuCursor.clearScreen() // Don't clear screen, show as part of install flow
         print(Term.colored("\n--- Review Selections ---", Term.blue))
 
@@ -678,35 +432,58 @@ class InstallerUI {
             }
         }
 
-        if selectedScripts.isEmpty {
-            print("\nNo scripts selected")
+        // Show required scripts instead
+        if requiredScripts.isEmpty {
+            print("\nNo additional scripts required by selected hooks")
         } else {
-            print(Term.colored("\nSelected Scripts:", Term.yellow))
+            print(Term.colored("\nRequired Scripts (will be installed):", Term.yellow))
             if let templates = try? installer.getAvailableTemplates() {
-                 let sortedSelectedScripts = selectedScripts.sorted()
-                for templateName in sortedSelectedScripts {
-                     if let template = templates.first(where: { $0.0 == templateName }) {
+                 let sortedRequiredScripts = requiredScripts.sorted()
+                for scriptName in sortedRequiredScripts {
+                     // Extract just the filename for lookup
+                     let filename = (scriptName as NSString).lastPathComponent
+                     if let template = templates.first(where: { $0.0 == filename }) {
                          print("    • \(template.0) (\(Term.colored(template.1, Term.yellow)))")
                      } else {
-                         print("    • \(templateName)") // Fallback if description not found
+                         print("    • \(filename)") // Fallback if description not found
                      }
                 }
             } else {
                  // Print sorted names if templates couldn't be re-fetched
-                 selectedScripts.sorted().forEach { print("    • \($0)") }
+                 requiredScripts.sorted().forEach { print("    • \($0)") }
             }
         }
-
-        // print("\nPress Enter to continue...") // Remove wait
-        // fflush(stdout)
-        // _ = MenuCursor.waitForEnter() // Remove wait
+        
         print("\n" + String(repeating: "-", count: 25)) // Add separator
     }
     
     private func installSelected() -> Bool {
         MenuCursor.clearScreen()
 
-        if selectedHooks.isEmpty && selectedScripts.isEmpty {
+        // Determine required scripts based on selected hooks
+        var requiredScripts: Set<String> = []
+        for hookId in selectedHooks {
+            if let hook = availableHooks.flatMap({ $0.hooks }).first(where: { $0.id == hookId }), hook.repo == "local" {
+                 // Derive script path from hook definition (assuming 'entry' holds the relative path)
+                 // This logic matches the one in `updateConfigFile`
+                 var scriptPath = ""
+                 switch hook.id {
+                 case "accessibility-check":
+                     scriptPath = "\(Config.scriptsDir)/accessibility-check.sh"
+                 case "xcode-project-check":
+                     scriptPath = "\(Config.scriptsDir)/check-xcode-dangling-refs.sh" 
+                 case "unused-assets-check":
+                      scriptPath = "\(Config.scriptsDir)/check-unused-assets.sh"
+                 default:
+                     scriptPath = "\(Config.scriptsDir)/\(hookId).sh"
+                 }
+                 requiredScripts.insert(scriptPath) // Insert the full path
+            }
+        }
+        let requiredScriptList = Array(requiredScripts)
+        let requiredScriptFilenames = requiredScriptList.map { ($0 as NSString).lastPathComponent } // Get just filenames for setupScripts
+
+        if selectedHooks.isEmpty { // Check hooks only now
             TerminalUI.showWarning("Nothing selected to install!")
             print("\nPress Enter to continue...")
             _ = MenuCursor.waitForEnter()
@@ -714,11 +491,11 @@ class InstallerUI {
         }
 
         // Show what will be installed before confirming
-        showSelectedForConfirmation()
+        showSelectedForConfirmation(requiredScripts: requiredScriptList)
 
         print(Term.colored("\nReady to install:", Term.blue)) // Add newline for spacing
         print("  • \(selectedHooks.count) hooks")
-        print("  • \(selectedScripts.count) scripts")
+        print("  • \(requiredScriptFilenames.count) required scripts")
 
         if !TerminalUI.confirm("Proceed with installation?") {
             return false // User cancelled
@@ -731,43 +508,31 @@ class InstallerUI {
         var errorMessage = ""
 
         do {
-            // 1. Create Config File (if needed, though logic might be better placed earlier)
-             if !FileManager.default.fileExists(atPath: Config.configFile) {
-                 print(Term.colored("Creating configuration file...", Term.yellow))
-                 // Consider confirming this again or ensuring it's done before selection
-                 try installer.createConfigFileIfNeeded() // Assume Installer handles check + creation
-                 TerminalUI.showSuccess("Configuration file created/verified.")
-             }
+            // 1. Create/Verify Config File (ensures it exists before update)
+            try installer.createConfigFileIfNeeded()
+            TerminalUI.showSuccess("Configuration file verified/created.")
 
-            // 2. Setup Scripts
-            if !selectedScripts.isEmpty {
-                print(Term.colored("Setting up scripts...", Term.yellow))
-                try installer.setupScripts(Array(selectedScripts))
+            // 2. Setup Required Scripts (based on selected hooks)
+            if !requiredScriptFilenames.isEmpty {
+                print(Term.colored("\nSetting up required scripts...", Term.yellow))
+                try installer.setupScripts(requiredScriptFilenames) 
                 TerminalUI.showSuccess("Scripts installed.")
             } else {
-                 print("Skipping script setup (none selected).")
+                 print("\nSkipping script setup (no scripts required by selected hooks).")
             }
 
             // 3. Update Config File with Selected Hooks
-            if !selectedHooks.isEmpty {
-                 print(Term.colored("Updating configuration file with selected hooks...", Term.yellow))
-                 try installer.updateConfigFile(selectedHookIds: selectedHooks)
-                 TerminalUI.showSuccess("Configuration file updated.")
-            } else {
-                 print("Skipping config file update (no hooks selected).")
-            }
+            print(Term.colored("\nUpdating configuration file with selected hooks...", Term.yellow))
+            try installer.updateConfigFile(selectedHookIds: selectedHooks)
+            TerminalUI.showSuccess("Configuration file updated.")
 
+            // 4. Install Hooks via pre-commit install (immediately after config update)
+            print(Term.colored("\nRunning 'pre-commit install' to set up hooks defined in config...", Term.yellow))
+            // Pass --install-hooks to ensure the hooks are activated based on the updated config
+            try installer.installHooks(forceInstall: true) 
+            TerminalUI.showSuccess("Pre-commit hooks installed/updated.")
 
-            // 4. Install Hooks via pre-commit command
-            // Determine hook types to install (e.g., from config or default)
-            let hookTypesToInstall = ["pre-commit", "pre-push", "commit-msg"] // Example, could be configurable
-            if !hookTypesToInstall.isEmpty {
-                 print(Term.colored("Running 'pre-commit install' for \(hookTypesToInstall.joined(separator: ", "))...", Term.yellow))
-                 try installer.installHooks(types: hookTypesToInstall) // Pass specific types
-                 TerminalUI.showSuccess("Pre-commit hooks installed.")
-            }
-
-
+            // --- Final Success Message --- 
             print(Term.colored("\n✨ Installation completed successfully!", Term.green))
             print("""
 
@@ -787,18 +552,17 @@ class InstallerUI {
 
         print("\nPress Enter to continue...")
         _ = MenuCursor.waitForEnter()
-        return success // Return true if installation was successful and we should exit the main loop
+        return success
     }
     
     private func confirmExit() -> Bool {
-        if selectedHooks.isEmpty && selectedScripts.isEmpty {
+        if selectedHooks.isEmpty {
             return true // Nothing selected, safe to exit
         }
 
         MenuCursor.clearScreen()
         print(Term.colored("You have uninstalled selections:", Term.yellow))
         print("  • \(selectedHooks.count) hooks")
-        print("  • \(selectedScripts.count) scripts")
 
         return TerminalUI.confirm("Are you sure you want to exit without installing?")
     }
@@ -1032,155 +796,156 @@ class Installer {
     
     func updateConfigFile(selectedHookIds: Set<String>) throws {
         let configPath = Config.configFile
-        guard fileManager.fileExists(atPath: configPath) else {
-            throw InstallerError.genericError("Configuration file not found at \(configPath)")
+        
+        // Ensure file exists, creating if necessary
+        if !fileManager.fileExists(atPath: configPath) {
+            TerminalUI.showWarning("Config file not found, creating a default one.")
+            try createConfigFileIfNeeded() // This will throw if creation fails or is skipped
         }
+        
+        let originalContent = try String(contentsOfFile: configPath, encoding: .utf8)
+        let lines = originalContent.components(separatedBy: .newlines)
 
-        // --- Basic YAML Generation (Not Robust Parsing/Editing) ---
-        // This assumes a simple structure and appends. A proper YAML parser would be better.
-        var configContent = try String(contentsOfFile: configPath, encoding: .utf8)
-
-        // Remove existing hooks managed by this installer to avoid duplicates (simple approach)
-        let lines = configContent.components(separatedBy: .newlines)
-        var newLines: [String] = []
-        var inManagedRepo = false
-        let repoMarker = "# Managed by pre-commit-configs installer" // Marker comment
-        for line in lines {
-             // Detect start of potentially managed repo sections based on known repos or a marker
-             if line.contains("repo: https://github.com/pre-commit/pre-commit-hooks") ||
-                line.contains("repo: https://github.com/realm/SwiftLint") ||
-                line.contains("repo: https://github.com/nicklockwood/SwiftFormat") ||
-                line.contains("repo: local") || // Include local hooks
-                line.contains(repoMarker) { // Or detect our marker
-                 inManagedRepo = true
-                 // Keep the repo line itself unless it's just the marker
-                 if !line.contains(repoMarker) {
-                     newLines.append(line)
-                 }
-             } else if inManagedRepo && !line.trimmingCharacters(in: .whitespaces).starts(with: "-") && !line.trimmingCharacters(in: .whitespaces).isEmpty {
-                 // If we were in a managed repo and hit a line that's not indented (likely a new repo or end of file)
-                 inManagedRepo = false
-                 newLines.append(line) // Keep this line
-             } else if !inManagedRepo {
-                 // Keep lines that are not part of a managed repo section
-                 newLines.append(line)
-             }
-             // Discard lines within a managed repo section (they will be regenerated)
-         }
-         configContent = newLines.joined(separator: "\n")
-
-        // Ensure 'repos:' key exists
-        if !configContent.contains("\nrepos:") {
-             configContent += "\nrepos:\n"
+        // --- Extract Existing Repos Section --- 
+        var existingReposContent: [String] = []
+        for (index, line) in lines.enumerated() {
+            if line.trimmingCharacters(in: .whitespacesAndNewlines).starts(with: "repos:") {
+                // Capture from repos: onwards
+                existingReposContent = Array(lines.suffix(from: index + 1))
+                break
+            }
         }
+        
+        // If repos: was not found, the existingReposContent will be empty
 
-        // Group selected hooks by repo
+        // --- Construct the Required Top Section --- 
+        let requiredTopSection = """
+        \(Config.standardHeader)
+
+        \(Config.standardDefaults)
+        """
+        
+        // --- Prepare Managed Hooks Section --- 
+        let repoMarker = Config.managedHookMarker
+        var managedHooksAdditions = "\n" + String(repeating: " ", count: 2) + repoMarker + "\n" // Add marker
+
+        // Group selected hooks by repo (same logic as before)
         var hooksByRepo: [String: [(id: String, rev: String)]] = [:]
         var localHooks: [(id: String, name: String, entry: String, language: String, files: String)] = []
-
+        
         for hookId in selectedHookIds {
-            if let hook = availableHooks.flatMap({ $0.hooks }).first(where: { $0.id == hookId }) {
-                if hook.repo == "local" {
-                    // Define local hook entries (example structure)
-                     // These need to be defined based on the actual script names and functionality
-                     var entry = ""
-                     var files = ""
-                     let name = hook.description // Use description as name for local hook
-                     let language = "script"
-
-                     switch hook.id {
-                     case "accessibility-check":
-                         entry = "\(Config.scriptsDir)/accessibility-check.sh"
-                         files = "\\.swift$" // Example: Run on Swift files
-                     case "xcode-project-check":
-                         entry = "\(Config.scriptsDir)/check-xcode-dangling-refs.sh" // Assuming script name
-                         files = "\\.pbxproj$" // Example: Run on project files
-                     case "unused-assets-check":
-                          entry = "\(Config.scriptsDir)/check-unused-assets.sh" // Assuming script name
-                          files = "\\.(swift|storyboard|xib)$" // Example: Files where assets might be referenced
-                     default:
-                         entry = "\(Config.scriptsDir)/\(hookId).sh" // Default assumption
-                         files = "" // Run on all files by default if not specified
+             if let hook = availableHooks.flatMap({ $0.hooks }).first(where: { $0.id == hookId }) {
+                 if hook.repo == "local" {
+                      var entry = ""
+                      var files = ""
+                      let name = hook.description
+                      let language = "script"
+                      switch hook.id {
+                      case "accessibility-check":
+                          entry = "\(Config.scriptsDir)/accessibility-check.sh"
+                          files = "\\.swift$"
+                      case "xcode-project-check":
+                          entry = "\(Config.scriptsDir)/check-xcode-dangling-refs.sh"
+                          files = "\\.pbxproj$"
+                      case "unused-assets-check":
+                           entry = "\(Config.scriptsDir)/check-unused-assets.sh"
+                           files = "\\.(swift|storyboard|xib)$"
+                      default:
+                          entry = "\(Config.scriptsDir)/\(hookId).sh"
+                          files = ""
+                      }
+                      localHooks.append((id: hook.id, name: name, entry: entry, language: language, files: files))
+                 } else {
+                     if hooksByRepo[hook.repo] == nil {
+                         hooksByRepo[hook.repo] = []
                      }
-                     localHooks.append((id: hook.id, name: name, entry: entry, language: language, files: files))
-
-                } else {
-                    if hooksByRepo[hook.repo] == nil {
-                        hooksByRepo[hook.repo] = []
-                    }
-                    // Avoid duplicates within the same repo/rev group
-                    if !hooksByRepo[hook.repo]!.contains(where: { $0.id == hook.id && $0.rev == hook.rev }) {
-                        hooksByRepo[hook.repo]!.append((id: hook.id, rev: hook.rev))
-                    }
-                }
-            }
-        }
-
-        // Append hooks to config content
-        var additions = "\n" + repoMarker + "\n" // Add marker to identify managed section
-
-        for (repo, hooks) in hooksByRepo.sorted(by: { $0.key < $1.key }) {
-            // Assuming all hooks from the same repo in our list use the same rev for simplicity
-            if let rev = hooks.first?.rev {
-                additions += "-   repo: \(repo)\n"
-                additions += "    rev: \(rev)\n"
-                additions += "    hooks:\n"
-                for hook in hooks.sorted(by: { $0.id < $1.id }) {
-                    additions += "      - id: \(hook.id)\n"
+                     if !hooksByRepo[hook.repo]!.contains(where: { $0.id == hook.id && $0.rev == hook.rev }) {
+                         hooksByRepo[hook.repo]!.append((id: hook.id, rev: hook.rev))
+                     }
                  }
-             }
-        }
-
-        // Append local hooks
-         if !localHooks.isEmpty {
-             additions += "-   repo: local\n"
-             additions += "    hooks:\n"
-             for hook in localHooks.sorted(by: { $0.id < $1.id }) {
-                 additions += "      - id: \(hook.id)\n"
-                 additions += "        name: \"\(hook.name)\"\n" // Quoted name
-                 additions += "        entry: \(hook.entry)\n"
-                 additions += "        language: \(hook.language)\n"
-                 if !hook.files.isEmpty {
-                     additions += "        files: \(hook.files)\n"
-                 }
-                 additions += "        stages: [pre-commit]\n" // Sensible default stage
              }
          }
 
-        // Write the modified content back
-        try (configContent + additions).write(toFile: configPath, atomically: true, encoding: .utf8)
-    }
-    
-    func installHooks(types: [String]) throws {
-        guard !types.isEmpty else {
-            TerminalUI.showWarning("No hook types specified for installation.")
-            return
+        // Append remote hooks to additions string
+        for (repo, hooks) in hooksByRepo.sorted(by: { $0.key < $1.key }) {
+            if let rev = hooks.first?.rev {
+                managedHooksAdditions += "  - repo: \(repo)\n"
+                managedHooksAdditions += "    rev: \(rev)\n"
+                managedHooksAdditions += "    hooks:\n"
+                for hook in hooks.sorted(by: { $0.id < $1.id }) {
+                    managedHooksAdditions += "      - id: \(hook.id)\n"
+                 }
+             }
         }
 
-        for hookType in types {
-            TerminalUI.showProgress(title: "Installing Hooks", progress: 0.0, message: "Running pre-commit install -t \(hookType)...")
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: "/usr/bin/env") // Use env to find pre-commit in PATH
-            process.arguments = ["pre-commit", "install", "-t", hookType, "--install-hooks"] // Ensure hooks are installed
+        // Append local hooks to additions string
+         if !localHooks.isEmpty {
+             managedHooksAdditions += "  - repo: local\n"
+             managedHooksAdditions += "    hooks:\n"
+             for hook in localHooks.sorted(by: { $0.id < $1.id }) {
+                 managedHooksAdditions += "      - id: \(hook.id)\n"
+                 managedHooksAdditions += "        name: \"\(hook.name)\"\n"
+                 managedHooksAdditions += "        entry: \(hook.entry)\n"
+                 managedHooksAdditions += "        language: \(hook.language)\n"
+                 if !hook.files.isEmpty {
+                     managedHooksAdditions += "        files: \(hook.files)\n"
+                 }
+                 managedHooksAdditions += "        stages: [pre-commit]\n"
+             }
+         }
+         
+         // Only add the marker and hooks if hooks were actually selected
+         if selectedHookIds.isEmpty {
+             managedHooksAdditions = "" // Don't add marker if no hooks selected
+         }
 
-            let pipe = Pipe()
-            process.standardOutput = pipe
-            process.standardError = pipe
+        // --- Combine and Write --- 
+        // Construct the final content: Required Top -> repos: -> Existing Hooks -> Managed Hooks
+        let finalContent = requiredTopSection + "\nrepos:\n" + 
+                           existingReposContent.joined(separator: "\n") + 
+                           managedHooksAdditions
 
-            do {
-                try process.run()
-                process.waitUntilExit()
+        // Write the modified content back
+        try finalContent.write(toFile: configPath, atomically: true, encoding: .utf8)
+    }
+    
+    func installHooks(forceInstall: Bool = false) throws {
+        let progressMessage = "Running pre-commit install..."
+        TerminalUI.showProgress(title: "Installing Hooks", progress: 0.0, message: progressMessage)
+        
+        var arguments = ["pre-commit", "install"]
+        if forceInstall {
+            arguments.append("--install-hooks")
+        }
+        
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+        process.arguments = arguments
 
-                if process.terminationStatus != 0 {
-                    let errorData = pipe.fileHandleForReading.readDataToEndOfFile()
-                    let errorString = String(data: errorData, encoding: .utf8) ?? "Unknown pre-commit error"
-                    throw InstallerError.hookInstallationFailed(hookType, errorString)
-                }
-                TerminalUI.showProgress(title: "Installing Hooks", progress: 1.0, message: "Hook type '\(hookType)' installed.")
-            } catch {
-                 // Catch errors from process.run() itself
-                 throw InstallerError.hookInstallationFailed(hookType, "Failed to execute pre-commit command: \(error.localizedDescription)")
+        let outputPipe = Pipe()
+        let errorPipe = Pipe()
+        process.standardOutput = outputPipe
+        process.standardError = errorPipe
+
+        do {
+            try process.run()
+            process.waitUntilExit()
+            
+            let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
+            let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+            let outputString = String(data: outputData, encoding: .utf8) ?? ""
+            let errorString = String(data: errorData, encoding: .utf8) ?? ""
+
+            if process.terminationStatus == 0 {
+                TerminalUI.showProgress(title: "Installing Hooks", progress: 1.0, message: "Hooks installed successfully.")
+                if !outputString.isEmpty { print("Output:\n\(outputString)") }
+            } else {
+                let combinedError = "pre-commit install failed (status \(process.terminationStatus)). Error output: \(errorString.isEmpty ? "None" : errorString)"
+                throw InstallerError.hookInstallationFailed("general", combinedError)
             }
+        } catch {
+             let errorDetails = "Failed to execute pre-commit install command: \(error.localizedDescription)"
+             throw InstallerError.hookInstallationFailed("general", errorDetails)
         }
     }
     
@@ -1188,35 +953,29 @@ class Installer {
         if !fileManager.fileExists(atPath: Config.configFile) {
             TerminalUI.showWarning("Configuration file \(Config.configFile) not found.")
             if TerminalUI.confirm("Create a new default .pre-commit-config.yaml file?") {
-                 let configContent = """
-                 # Default configurations generated by pre-commit-configs installer
-                 # See https://pre-commit.com/ for more information
-                 # See https://pre-commit.com/hooks.html for more hooks
+                // Combine standard header, defaults, and the repos key
+                let initialContent = """
+                \(Config.standardHeader)
 
-                 # Define default stages if needed, otherwise hooks define their own
-                 # default_stages: [commit]
+                \(Config.standardDefaults)
 
-                 # Default install types for `pre-commit install`
-                 default_install_hook_types: [pre-commit, pre-push, commit-msg]
-
-                 # Specify language versions if needed
-                 # default_language_version:
-                 #   python: python3.9
-
-                 repos:
-                 # Add repositories and hooks below, or use the installer menu
-                 """
-                 do {
-                    try configContent.write(toFile: Config.configFile, atomically: true, encoding: .utf8)
-                    TerminalUI.showSuccess("Created \(Config.configFile)")
-                 } catch {
-                      throw InstallerError.genericError("Failed to create \(Config.configFile): \(error.localizedDescription)")
-                 }
+                repos:
+                  # Add hooks here using the installer or manually
+                """
+                do {
+                    try initialContent.write(toFile: Config.configFile, atomically: true, encoding: .utf8)
+                    TerminalUI.showSuccess("Created \(Config.configFile) with default header and structure.")
+                } catch {
+                    throw InstallerError.genericError("Failed to create \(Config.configFile): \(error.localizedDescription)")
+                }
             } else {
-                 TerminalUI.showWarning("Skipping config file creation. Installation might fail if the file is required.")
+                TerminalUI.showWarning("Skipping config file creation. Installation might fail if the file is required.")
+                // Ensure the function doesn't proceed if creation is skipped but needed
+                throw InstallerError.genericError("Config file creation skipped by user.") 
             }
         } else {
-             TerminalUI.showSuccess("Configuration file \(Config.configFile) found.")
+            TerminalUI.showSuccess("Configuration file \(Config.configFile) found.")
+            // Update function will handle ensuring defaults in existing files
         }
     }
 }
