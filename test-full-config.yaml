@@ -1,7 +1,6 @@
 # See https://pre-commit.com/ for more information
 # See https://pre-commit.com/hooks.html for more hooks
 # This file is managed by the pre-commit-configs installer.
-
 # Default configurations (optional)
 default_stages: [pre-commit] # Sensible default
 default_install_hook_types: [pre-commit, pre-push, commit-msg]
@@ -10,11 +9,13 @@ default_install_hook_types: [pre-commit, pre-push, commit-msg]
 repos:
   # Add hooks here using the installer or manually
   # --- Managed by pre-commit-configs installer ---
-  - repo: https://github.com/nicklockwood/SwiftFormat
-    rev: 0.53.5
-    hooks:
-      - id: swiftformat
+  # SwiftLint Hook
   - repo: https://github.com/realm/SwiftLint
-    rev: 0.54.0
+    rev: 0.58.0
     hooks:
-      - id: swiftlint
+    - id: swiftlint
+      name: swiftlint
+      description: "Lint Swift files"
+      args: [--autocorrect, --config, .swiftlint.yml]
+      types: [swift]
+      require_serial: true

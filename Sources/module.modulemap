@@ -1,0 +1,49 @@
+module Domain {
+    umbrella header "Domain.h"
+    export *
+    
+    explicit module Constants {
+        header "Domain/Constants.h"
+        export *
+    }
+    
+    explicit module ValueObjects {
+        header "Domain/ValueObjects.h"
+        export *
+    }
+    
+    explicit module Protocols {
+        header "Domain/Protocols.h"
+        export *
+    }
+}
+
+module Infrastructure {
+    umbrella header "Infrastructure.h"
+    export *
+    
+    explicit module Shell {
+        header "Infrastructure/Shell.h"
+        export *
+    }
+    
+    explicit module Logging {
+        header "Infrastructure/Logging.h"
+        export *
+    }
+    
+    explicit module Registry {
+        header "Infrastructure/Registry.h"
+        export *
+    }
+}
+
+module Application {
+    umbrella header "Application.h"
+    export *
+    
+    explicit module Services {
+        header "Application/Services.h"
+        export *
+    }
+} 

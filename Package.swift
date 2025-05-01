@@ -11,14 +11,15 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.2.0"),
-        .package(url: "https://github.com/onevcat/Rainbow", from: "4.0.0")
+        .package(url: "https://github.com/onevcat/Rainbow", from: "4.0.0"),
     ],
     targets: [
         .executableTarget(
             name: "PreCommitInstaller",
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
-                "Rainbow"
+                "Rainbow",
+                .product(name: "Yams", package: "Yams")
             ],
             path: "Sources"
         )

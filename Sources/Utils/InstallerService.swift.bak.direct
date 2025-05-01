@@ -423,8 +423,8 @@ class InstallerService {
     
     // Update config file with selected hook templates
     func updateConfigFileWithTemplates(selectedTemplates: [String]) throws {
-        try updateConfigFileWithTemplatesFixed(selectedTemplates: selectedTemplates)
-    }
+    try updateConfigFileWithTemplatesFixed(selectedTemplates: selectedTemplates)
+}
     
     // Install hooks via pre-commit
     func installHooks(types: [String] = ["pre-commit", "pre-push"]) throws {
@@ -455,25 +455,6 @@ class InstallerService {
             }
         }
     }
-    
-    // Extension to utilize the newly refactored ConfigFileUpdater
-    func updateConfigFileWithUpdater(selectedTemplates: [String]) throws -> [String: CustomStringConvertible] {
-        let configPath = Config.configFile
-        
-        // Create a properly configured ConfigFileUpdater
-        let updater = ConfigFileUpdaterFactory.createUpdater(verbose: false) // Avoid direct access to private property
-        
-        // Update the config file
-        try updater.updateConfigFileWithTemplates(selectedTemplates: selectedTemplates, configPath: configPath)
-        
-        // Read the updated config for return value
-        let configContent = try String(contentsOfFile: configPath, encoding: .utf8)
-        
-        return [
-            "config": configContent,
-            "templates": selectedTemplates
-        ]
-    }
 }
 
 // MARK: - Errors
@@ -499,30 +480,26 @@ enum InstallerError: Error, LocalizedError {
             return message
         }
     }
-}
+} 
 
-/// Direct append installer service - no parsing, just directly appending templates
+import Foundation
+import Rainbow
+
+
+import Foundation
+import Rainbow
+
+/// Installer service patch that properly handles MULTIPLE templates
 extension InstallerService {
     
-    /// Update config file with selected hook templates - direct append method
+    /// Update config file with selected hook templates - fixing multiple templates issue
     func updateConfigFileWithTemplatesFixed(selectedTemplates: [String]) throws {
         let configPath = Config.configFile
         
         // Create or read existing config
         var configContent = ""
-        
         if fileManager.fileExists(atPath: configPath) {
-            // Read existing config
             configContent = try String(contentsOfFile: configPath, encoding: .utf8)
-            
-            // Remove any existing templates
-            if let startMarkerRange = configContent.range(of: "# --- BEGIN MANAGED TEMPLATES ---") {
-                if let endMarkerRange = configContent.range(of: "# --- END MANAGED TEMPLATES ---") {
-                    let startIndex = startMarkerRange.lowerBound
-                    let endIndex = configContent.index(after: endMarkerRange.upperBound)
-                    configContent.removeSubrange(startIndex..<endIndex)
-                }
-            }
         } else {
             // Create default config if it doesn't exist
             configContent = """
@@ -537,69 +514,95 @@ extension InstallerService {
             repos:
               # Add hooks here using the installer or manually
             """
+            try configContent.write(toFile: configPath, atomically: true, encoding: .utf8)
         }
         
-        // Prepare the template section
-        var templateSection = "\n# --- BEGIN MANAGED TEMPLATES ---\n"
+        // Add managed section marker if not present and clean any existing templates
+        let managedMarker = "# --- Managed by pre-commit-configs installer ---"
+        var lines = configContent.components(separatedBy: .newlines)
+        var cleanedLines = [String]()
+        var markerIndex = -1
         
-        // Collect all templates
+        // Find marker and clean existing templates
+        for (index, line) in lines.enumerated() {
+            if line.contains(managedMarker) {
+                markerIndex = index
+                cleanedLines.append(line)
+                break
+            }
+            cleanedLines.append(line)
+        }
+        
+        // If marker wasn't found, add it
+        if markerIndex == -1 {
+            // Look for repos: section
+            let reposLineIndex = lines.firstIndex { $0.contains("repos:") } ?? -1
+            
+            if reposLineIndex != -1 {
+                // Add marker after the repos line and any comments
+                var insertLineIndex = reposLineIndex + 1
+                while insertLineIndex < lines.count && (lines[insertLineIndex].trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("#") || lines[insertLineIndex].trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) {
+                    insertLineIndex += 1
+                }
+                
+                cleanedLines = Array(lines[0..<insertLineIndex])
+                cleanedLines.append("  \(managedMarker)")
+            } else {
+                // No repos section found, add it with the marker
+                cleanedLines.append("repos:")
+                cleanedLines.append("  \(managedMarker)")
+            }
+        }
+        
+        // Collect all selected templates
+        var allTemplateLines = [String]()
+        
         for templateDir in selectedTemplates {
             let hooksTemplatesPath = "hooks-templates" as NSString
             let templateDirPath = hooksTemplatesPath.appendingPathComponent(templateDir)
             let templatePath = (templateDirPath as NSString).appendingPathComponent("template.yaml")
             
             if fileManager.fileExists(atPath: templatePath) {
-                // Read the raw template content
+                // Read the template content
                 let templateContent = try String(contentsOfFile: templatePath, encoding: .utf8)
                 
-                // Add the template as-is, with its own indentation
-                templateSection += templateContent
-                
-                // Add a newline if not already present
-                if !templateContent.hasSuffix("\n") {
-                    templateSection += "\n"
-                }
-                
-                if verbose {
-                    print("✓ Added raw template from \(templateDir)".green)
+                // Process the template content - keep everything exactly as is
+                if !templateContent.isEmpty {
+                    // Add an empty line between templates
+                    if !allTemplateLines.isEmpty {
+                        allTemplateLines.append("")
+                    }
+                    
+                    // Add the entire template with correct indentation
+                    let templateLines = templateContent.components(separatedBy: .newlines)
+                    for templateLine in templateLines {
+                        let trimmedLine = templateLine.trimmingCharacters(in: .whitespacesAndNewlines)
+                        if !trimmedLine.isEmpty {
+                            allTemplateLines.append("  \(templateLine)")
+                        }
+                    }
+                    
+                    if verbose {
+                        print("✓ Processed template from \(templateDir)".green)
+                    }
                 }
             } else if verbose {
                 print("⚠️ Template file not found: \(templatePath)".yellow)
             }
         }
         
-        // Close the template section
-        templateSection += "# --- END MANAGED TEMPLATES ---\n"
-        
-        // Add the template section to the config
-        configContent += templateSection
+        // Add an empty line after the marker for spacing
+        if !allTemplateLines.isEmpty {
+            cleanedLines.append("")
+            cleanedLines.append(contentsOf: allTemplateLines)
+        }
         
         // Write updated config
+        configContent = cleanedLines.joined(separator: "\n")
         try configContent.write(toFile: configPath, atomically: true, encoding: .utf8)
         
         if verbose {
-            print("✓ Updated config file with \(selectedTemplates.count) raw templates".green)
+            print("✓ Updated config file with \(selectedTemplates.count) selected templates".green)
         }
-    }
-}
-
-// Extension to utilize the newly refactored ConfigFileUpdater
-extension InstallerService {
-    func updateConfigFileWithUpdater(selectedTemplates: [String]) throws -> [String: CustomStringConvertible] {
-        let configPath = Config.configFile
-        
-        // Create a properly configured ConfigFileUpdater
-        let updater = ConfigFileUpdaterFactory.createUpdater(verbose: false) // Avoid direct access to private property
-        
-        // Update the config file
-        try updater.updateConfigFileWithTemplates(selectedTemplates: selectedTemplates, configPath: configPath)
-        
-        // Read the updated config for return value
-        let configContent = try String(contentsOfFile: configPath, encoding: .utf8)
-        
-        return [
-            "config": configContent,
-            "templates": selectedTemplates
-        ]
     }
 }

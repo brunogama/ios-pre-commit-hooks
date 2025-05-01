@@ -107,96 +107,7 @@ class TerminalUIController {
     
     // Load available hooks from predefined list
     private func loadAvailableHooks() {
-        // For now, use a simplified list - we'll expand this later
-        availableHooks = [
-            HookGroup(
-                name: "File Formatting",
-                description: "Hooks for maintaining consistent file formatting",
-                hooks: [
-                    Hook(
-                        id: "check-yaml",
-                        repo: "https://github.com/pre-commit/pre-commit-hooks",
-                        rev: "v4.5.0",
-                        description: "Checks YAML files for parseable syntax",
-                        details: "Ensures all your YAML files are syntactically correct"
-                    ),
-                    Hook(
-                        id: "check-json",
-                        repo: "https://github.com/pre-commit/pre-commit-hooks",
-                        rev: "v4.5.0",
-                        description: "Checks JSON files for parseable syntax",
-                        details: "Validates JSON files and ensures they are well-formed"
-                    ),
-                    Hook(
-                        id: "pretty-format-json",
-                        repo: "https://github.com/pre-commit/pre-commit-hooks",
-                        rev: "v4.5.0",
-                        description: "Formats JSON files",
-                        details: "Automatically formats JSON files with consistent indentation and spacing"
-                    )
-                ]
-            ),
-            HookGroup(
-                name: "Code Quality",
-                description: "Hooks for maintaining code quality and standards",
-                hooks: [
-                    Hook(
-                        id: "trailing-whitespace",
-                        repo: "https://github.com/pre-commit/pre-commit-hooks",
-                        rev: "v4.5.0",
-                        description: "Removes trailing whitespace",
-                        details: "Trims trailing whitespace from all lines in files"
-                    ),
-                    Hook(
-                        id: "end-of-file-fixer",
-                        repo: "https://github.com/pre-commit/pre-commit-hooks",
-                        rev: "v4.5.0",
-                        description: "Ensures files end with a newline",
-                        details: "Makes sure all text files end with exactly one newline"
-                    )
-                ]
-            ),
-            HookGroup(
-                name: "Swift Specific",
-                description: "Hooks specifically for Swift development",
-                hooks: [
-                    Hook(
-                        id: "swiftlint",
-                        repo: "https://github.com/realm/SwiftLint",
-                        rev: "0.54.0",
-                        description: "Swift style and conventions linter",
-                        details: "Enforces Swift style and conventions defined in your .swiftlint.yml"
-                    ),
-                    Hook(
-                        id: "swiftformat",
-                        repo: "https://github.com/nicklockwood/SwiftFormat",
-                        rev: "0.53.5",
-                        description: "Swift code formatter",
-                        details: "Automatically formats Swift code according to a consistent style"
-                    )
-                ]
-            ),
-            HookGroup(
-                name: "iOS Specific",
-                description: "Hooks for iOS development workflow",
-                hooks: [
-                    Hook(
-                        id: "accessibility-check",
-                        repo: "local",
-                        rev: "local",
-                        description: "Checks for accessibility implementation",
-                        details: "Ensures UI elements have proper accessibility labels and hints"
-                    ),
-                    Hook(
-                        id: "xcode-project-check",
-                        repo: "local",
-                        rev: "local",
-                        description: "Validates Xcode project settings",
-                        details: "Checks for common issues in Xcode project configuration"
-                    )
-                ]
-            )
-        ]
+        # ls the directory and do head 19 lines for the readme.md
     }
     
     // Load available hook templates
@@ -669,12 +580,6 @@ class TerminalUIController {
                     print("DEBUG: Toggled hook \(hook.id). Selected: \(selectedHooks)") // DEBUG
                     renderHooksMenu() // Re-render the same menu
                 }
-            case .enter:
-                currentState = .main
-                currentSelectionIndex = 0
-            case .character("b"), .character("B"), .escape:
-                currentState = .main
-                currentSelectionIndex = 0
             default:
                 // Ignore other keys
                 break
