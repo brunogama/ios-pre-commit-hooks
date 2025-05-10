@@ -1,8 +1,0 @@
-# Dangling References Check
-- repo: local
-  hooks:
-  - id: check-xcode-dangling-refs
-    name: Check for dangling Xcode references
-    entry: ./scripts/check-xcode-dangling-refs.sh
-    language: script
-    files: \.pbxproj$

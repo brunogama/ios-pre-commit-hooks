@@ -1,8 +1,0 @@
-# Accessibility Check
-- repo: local
-  hooks:
-  - id: accessibility-reminder
-    name: Accessibility reminder
-    entry: ./scripts/accessibility-check.sh
-    language: script
-    files: \.swift$

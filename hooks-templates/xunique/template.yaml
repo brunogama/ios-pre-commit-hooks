@@ -1,8 +1,0 @@
-# xUnique Hook
-- repo: https://github.com/truebit/xUnique
-  rev: master
-  hooks:
-  - id: xunique
-    name: xunique
-    description: "Uniquify Xcode project files"
-    files: \.pbxproj$

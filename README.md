@@ -20,13 +20,14 @@ To use this project, you need to have the [pre-commit framework](https://pre-com
 #### Using Homebrew
 
 1. Open your terminal.
-2. Run the following command to install `pre-commit`:
+
+1. Run the following command to install `pre-commit`:
 
    ```bash
    brew install pre-commit
    ```
 
-3. Confirm the installation:
+1. Confirm the installation:
 
    ```bash
    pre-commit --version
@@ -35,26 +36,27 @@ To use this project, you need to have the [pre-commit framework](https://pre-com
 #### Using Pyenv
 
 1. Make sure you have Python installed via Pyenv. If not, follow the [Pyenv installation guide](https://github.com/pyenv/pyenv#installation).
-2. Install a Python version using Pyenv:
+
+1. Install a Python version using Pyenv:
 
    ```bash
    pyenv install <version> # Replace <version> with the desired Python version, e.g., 3.9.9
    pyenv global <version>  # Set the installed version as the global default
    ```
 
-3. Ensure `pip` is available:
+1. Ensure `pip` is available:
 
    ```bash
    pyenv exec python -m ensurepip --upgrade
    ```
 
-4. Use `pip` to install `pre-commit`:
+1. Use `pip` to install `pre-commit`:
 
    ```bash
    pip install pre-commit
    ```
 
-5. Confirm the installation:
+1. Confirm the installation:
 
    ```bash
    pre-commit --version
@@ -65,13 +67,15 @@ To use this project, you need to have the [pre-commit framework](https://pre-com
 Once the `pre-commit` framework is installed, set up the hooks by following these steps:
 
 1. Open your terminal.
-2. Run the following command:
+
+1. Run the following command:
 
    ```bash
    curl -sSL https://raw.githubusercontent.com/brunogama/ios-pre-commit-hooks/main/install | bash
    ```
 
-3. This command will:
+1. This command will:
+
    - Download the necessary files.
    - Execute the `install-hooks` script to set up your pre-commit environment.
 
@@ -83,6 +87,6 @@ Contributions are welcome! If you encounter issues or have suggestions for impro
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
----
+______________________________________________________________________
 
 Let me know if you'd like further refinements!

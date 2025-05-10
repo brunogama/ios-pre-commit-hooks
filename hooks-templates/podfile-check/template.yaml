@@ -1,9 +1,0 @@
-# Podfile Validation
-- repo: local
-  hooks:
-  - id: podfile-check
-    name: Validate Podfile
-    entry: pod lib lint
-    language: system
-    files: ^Podfile$
-    pass_filenames: false

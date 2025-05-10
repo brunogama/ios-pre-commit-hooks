@@ -20,7 +20,6 @@ changelog:
   - merge
   includeInvalidCommits: true
   commitScopes: []
-  commitIgnoreRegexPattern: "^WIP "
   headlines:
     feat: Features
     fix: Bug Fixes

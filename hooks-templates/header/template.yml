@@ -1,3 +1,0 @@
-# Default configurations (optional)
-default_stages: [pre-commit] # Sensible default
-default_install_hook_types: [pre-commit, pre-push, commit-msg]
